@@ -17,8 +17,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 // -------------------- SERVICES --------------------
 
-// Add controllers
-builder.Services.AddControllers();
+// Add controllers with JSON configuration to handle circular references
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true;
+    });
 
 // Swagger / API Explorer with JWT Support
 builder.Services.AddEndpointsApiExplorer();

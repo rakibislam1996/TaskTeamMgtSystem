@@ -1,10 +1,10 @@
 using MediatR;
 using System.Collections.Generic;
-using TaskTeamMgtSystem.Core.Domain.Entities;
+using TaskTeamMgtSystem.Application.Users.DTOs;
 
 namespace TaskTeamMgtSystem.Application.Users.Queries
 {
-    public class GetUsersQuery : IRequest<List<User>>
+    public class GetUsersQuery : IRequest<List<UserDto>>
     {
     }
 }

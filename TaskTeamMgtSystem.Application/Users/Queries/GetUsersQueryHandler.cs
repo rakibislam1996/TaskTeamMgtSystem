@@ -1,11 +1,11 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using TaskTeamMgtSystem.Core.Domain.Entities;
+using TaskTeamMgtSystem.Application.Users.DTOs;
 using TaskTeamMgtSystem.Infrastructure;
 
 namespace TaskTeamMgtSystem.Application.Users.Queries
 {
-    public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, List<User>>
+    public class GetUsersQueryHandler : IRequestHandler<GetUsersQuery, List<UserDto>>
     {
         private readonly TaskTeamMgtSystemDbContext _context;
 
@@ -14,12 +14,19 @@ namespace TaskTeamMgtSystem.Application.Users.Queries
             _context = context;
         }
 
-        public async Task<List<User>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
+        public async Task<List<UserDto>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
         {
-            return await _context.Users
-                .Include(u => u.TeamMappings)
-                .ThenInclude(utm => utm.Team)
+            var users = await _context.Users
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    FullName = u.FullName,
+                    Email = u.Email,
+                    Role = u.Role
+                })
                 .ToListAsync(cancellationToken);
+
+            return users;
         }
     }
 }

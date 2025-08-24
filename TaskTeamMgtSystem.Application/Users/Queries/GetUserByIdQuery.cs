@@ -1,9 +1,9 @@
 using MediatR;
-using TaskTeamMgtSystem.Core.Domain.Entities;
+using TaskTeamMgtSystem.Application.Users.DTOs;
 
 namespace TaskTeamMgtSystem.Application.Users.Queries
 {
-    public class GetUserByIdQuery : IRequest<User>
+    public class GetUserByIdQuery : IRequest<UserDto>
     {
         public int Id { get; set; }
     }
