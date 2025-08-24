@@ -2,7 +2,7 @@ using MediatR;
 
 namespace TaskTeamMgtSystem.Application.Teams.Commands
 {
-    public class UpdateTeamCommand : IRequest<bool>
+    public class UpdateTeamCommand : IRequest<int>
     {
         public int Id { get; set; }
         public string Name { get; set; }

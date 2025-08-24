@@ -3,7 +3,7 @@ using System;
 
 namespace TaskTeamMgtSystem.Application.TaskItems.Commands
 {
-    public class UpdateTaskItemCommand : IRequest<bool>
+    public class UpdateTaskItemCommand : IRequest<int>
     {
         public int Id { get; set; }
         public string Title { get; set; }

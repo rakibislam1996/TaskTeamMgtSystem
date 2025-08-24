@@ -8,6 +8,7 @@ namespace TaskTeamMgtSystem.Core.Domain.Entities
         public string? Title { get; set; }
         public string? Description { get; set; }
         public TaskTeamMgtSystem.Core.Domain.Enums.TaskStatus Status { get; set; }
+        public string? Priority { get; set; } // High, Medium, Low
         public int AssignedToUserId { get; set; }
         public int CreatedByUserId { get; set; }
         public int TeamId { get; set; }

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -11,6 +11,7 @@ using MediatR;
 using TaskTeamMgtSystem.Application.Common.Behaviors;
 using TaskTeamMgtSystem.API.Middleware;
 using Serilog;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,9 +20,42 @@ var builder = WebApplication.CreateBuilder(args);
 // Add controllers
 builder.Services.AddControllers();
 
-// Swagger / API Explorer
+// Swagger / API Explorer with JWT Support
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Task Team Management System API",
+        Version = "v1"
+    });
+
+    // 🔑 JWT Authorization in Swagger
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer' followed by a space and then your token.\n\nExample: Bearer eyJhbGciOi..."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 // Register DbContext with SQL Server provider
 builder.Services.AddDbContext<TaskTeamMgtSystemDbContext>(options =>
@@ -53,7 +87,8 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings["Issuer"],
         ValidAudience = jwtSettings["Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(key)
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        RoleClaimType = ClaimTypes.Role // <-- Important: map role claim
     };
 });
 
@@ -83,7 +118,10 @@ app.UseMiddleware<ErrorHandlingMiddleware>();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Task Team Management System API v1");
+    });
 }
 
 // HTTPS, Authentication, Authorization
@@ -91,12 +129,17 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// -------------------- DATABASE SEED --------------------
+// -------------------- DATABASE --------------------
+// Apply migrations and seed default users
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TaskTeamMgtSystemDbContext>();
-    db.Database.EnsureCreated();
-    DbSeeder.SeedAsync(db).GetAwaiter().GetResult();
+
+    // Apply pending migrations (creates tables if missing)
+    db.Database.Migrate();
+
+    // Seed default users if they don't exist
+    await DbSeeder.SeedAsync(db);
 }
 
 // -------------------- ROUTES --------------------
@@ -104,7 +147,7 @@ using (var scope = app.Services.CreateScope())
 // Map controllers
 app.MapControllers();
 
-// Optional: Minimal API for login
+// Minimal API for login
 app.MapPost("/login", async (TaskTeamMgtSystemDbContext db, IConfiguration config, LoginRequest login) =>
 {
     var user = await db.Users.FirstOrDefaultAsync(u => u.Email == login.Email);
