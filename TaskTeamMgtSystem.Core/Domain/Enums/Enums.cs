@@ -2,21 +2,11 @@ namespace TaskTeamMgtSystem.Core.Domain.Enums
 {
     public enum TaskStatus
     {
-        Pending,
+        ToDO,
         InProgress,
-        UnderReview,
-        Completed,
-        OnHold,
-        Cancelled
+        Done
     }
 
-    public enum TaskPriority
-    {
-        Low,
-        Medium,
-        High,
-        Critical
-    }
 
     public enum UserRole
     {
