@@ -1,6 +1,0 @@
-@TaskTeamMgtSystem_HostAddress = http://localhost:5101
-
-GET {{TaskTeamMgtSystem_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
