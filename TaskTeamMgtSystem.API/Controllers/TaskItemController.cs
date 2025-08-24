@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using TaskTeamMgtSystem.Application.TaskItems.Commands;
 using TaskTeamMgtSystem.Application.TaskItems.Queries;
 using Microsoft.Extensions.Logging;
-using TaskTeamMgtSystem.Core.Domain.Entities;
 
 namespace TaskTeamMgtSystem.API.Controllers
 {

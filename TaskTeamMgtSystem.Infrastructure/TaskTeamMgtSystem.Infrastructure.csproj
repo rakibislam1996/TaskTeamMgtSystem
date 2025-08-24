@@ -24,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TaskTeamMgtSystem.Application\TaskTeamMgtSystem.Application.csproj" />
     <ProjectReference Include="..\TaskTeamMgtSystem.Core\TaskTeamMgtSystem.Core.csproj" />
   </ItemGroup>
 
