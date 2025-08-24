@@ -196,7 +196,7 @@ app.MapPost("/login", async (TaskTeamMgtSystemDbContext db, IConfiguration confi
         return Results.Unauthorized();
     }
 
-    var jwtSettings = config.GetSection("Jwt");
+    var jwtSettings = config.GetSection("JWT");
     var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
     var claims = new[]
     {
