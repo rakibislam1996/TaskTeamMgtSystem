@@ -3,7 +3,7 @@ using TaskTeamMgtSystem.Core.Domain.Enums;
 
 namespace TaskTeamMgtSystem.Core.Domain.Entities
 {
-    public class Tasks : BaseEntity
+    public class TaskItem : BaseEntity
     {
         public string? Title { get; set; }
         public string? Description { get; set; }

@@ -5,7 +5,7 @@ using TaskTeamMgtSystem.Core.Domain.Entities;
 
 namespace TaskTeamMgtSystem.Application.TaskItems.Queries
 {
-    public class GetTaskItemsQuery : IRequest<List<Tasks>>
+    public class GetTaskItemsQuery : IRequest<List<TaskItem>>
     {
         public string Status { get; set; }
         public int? AssignedToUserId { get; set; }

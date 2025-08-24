@@ -11,26 +11,26 @@ namespace TaskTeamMgtSystem.Infrastructure
 
         public DbSet<User> Users { get; set; }
         public DbSet<Team> Teams { get; set; }
-        public DbSet<Tasks> Tasks { get; set; }
+        public DbSet<TaskItem> Tasks { get; set; }
         public DbSet<UserTeamMapping> UserTeamMappings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Tasks: AssignedTo (User) and CreatedBy (User) with DeleteBehavior.Restrict
-            modelBuilder.Entity<Tasks>()
+            modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.AssignedTo)
                 .WithMany(u => u.AssignedTasks)
                 .HasForeignKey(t => t.AssignedToUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Tasks>()
+            modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.CreatedBy)
                 .WithMany(u => u.CreatedTasks)
                 .HasForeignKey(t => t.CreatedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // Tasks → Team with DeleteBehavior.Cascade
-            modelBuilder.Entity<Tasks>()
+            modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.Team)
                 .WithMany(team => team.Tasks)
                 .HasForeignKey(t => t.TeamId)
