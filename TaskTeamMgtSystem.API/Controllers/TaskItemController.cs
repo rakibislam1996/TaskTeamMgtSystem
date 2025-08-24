@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskTeamMgtSystem.Application.TaskItems.Commands;
 using TaskTeamMgtSystem.Application.TaskItems.Queries;
+using TaskTeamMgtSystem.Application.Common.Services;
 using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 
 namespace TaskTeamMgtSystem.API.Controllers
 {
@@ -13,10 +15,13 @@ namespace TaskTeamMgtSystem.API.Controllers
     {
         private readonly IMediator _mediator;
         private readonly ILogger<TaskItemController> _logger;
-        public TaskItemController(IMediator mediator, ILogger<TaskItemController> logger)
+        private readonly Application.Common.Services.IAuthorizationService _authorizationService;
+
+        public TaskItemController(IMediator mediator, ILogger<TaskItemController> logger, Application.Common.Services.IAuthorizationService authorizationService)
         {
             _mediator = mediator;
             _logger = logger;
+            _authorizationService = authorizationService;
         }
 
         // Manager: create/update tasks
@@ -41,7 +46,13 @@ namespace TaskTeamMgtSystem.API.Controllers
         // Employee: view/update only their own assigned tasks
         [HttpGet]
         [Authorize(Policy = "Employee")]
-        public async Task<IActionResult> GetTasks([FromQuery] GetTaskItemsQuery query) => Ok(await _mediator.Send(query));
+        public async Task<IActionResult> GetTasks([FromQuery] GetTaskItemsQuery query)
+        {
+            // Filter tasks to only show tasks assigned to the current user
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            query.AssignedToUserId = userId;
+            return Ok(await _mediator.Send(query));
+        }
 
         [HttpGet("{id}")]
         [Authorize(Policy = "Employee")]
@@ -51,6 +62,14 @@ namespace TaskTeamMgtSystem.API.Controllers
         [Authorize(Policy = "Employee")]
         public async Task<IActionResult> UpdateOwnTask(UpdateTaskItemCommand command)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            
+            // Verify user can only update their own assigned tasks
+            if (!await _authorizationService.CanUserAccessTaskAsync(userId, command.Id))
+            {
+                return Forbid();
+            }
+
             var result = await _mediator.Send(command);
             _logger.LogInformation("Employee updated own task: {@Command}", command);
             return Ok(result);

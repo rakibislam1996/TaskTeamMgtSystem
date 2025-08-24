@@ -3,10 +3,13 @@ using TaskTeamMgtSystem.Application.TaskItems.Commands;
 
 namespace TaskTeamMgtSystem.Application.TaskItems.Validators
 {
-    public class CreateTaskItemCommandValidator : AbstractValidator<CreateTaskItemCommand>
+    public class UpdateTaskItemCommandValidator : AbstractValidator<UpdateTaskItemCommand>
     {
-        public CreateTaskItemCommandValidator()
+        public UpdateTaskItemCommandValidator()
         {
+            RuleFor(x => x.Id)
+                .GreaterThan(0).WithMessage("Task ID must be greater than 0.");
+
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Task title is required.")
                 .MaximumLength(200).WithMessage("Title cannot exceed 200 characters.");
@@ -16,9 +19,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Validators
 
             RuleFor(x => x.AssignedToUserId)
                 .GreaterThan(0).WithMessage("Assigned user ID must be greater than 0.");
-
-            RuleFor(x => x.CreatedByUserId)
-                .GreaterThan(0).WithMessage("Created by user ID must be greater than 0.");
 
             RuleFor(x => x.TeamId)
                 .GreaterThan(0).WithMessage("Team ID must be greater than 0.");

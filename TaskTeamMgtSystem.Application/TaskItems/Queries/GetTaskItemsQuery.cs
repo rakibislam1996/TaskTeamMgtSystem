@@ -1,11 +1,12 @@
 using MediatR;
 using System;
 using System.Collections.Generic;
+using TaskTeamMgtSystem.Application.Common.Models;
 using TaskTeamMgtSystem.Core.Domain.Entities;
 
 namespace TaskTeamMgtSystem.Application.TaskItems.Queries
 {
-    public class GetTaskItemsQuery : IRequest<List<TaskItem>>
+    public class GetTaskItemsQuery : IRequest<PaginatedResult<TaskItem>>
     {
         public string? Status { get; set; }
         public string? Priority { get; set; }

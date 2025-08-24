@@ -68,8 +68,11 @@ builder.Services.AddValidatorsFromAssemblyContaining<TaskTeamMgtSystem.Applicati
 builder.Services.AddMediatR(typeof(TaskTeamMgtSystem.Application.Users.Commands.CreateUserCommand).Assembly);
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
+// Register application services
+builder.Services.AddScoped<TaskTeamMgtSystem.Application.Common.Services.IAuthorizationService, TaskTeamMgtSystem.Application.Common.Services.AuthorizationService>();
+
 // JWT Authentication configuration
-var jwtSettings = builder.Configuration.GetSection("Jwt");
+var jwtSettings = builder.Configuration.GetSection("JWT");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
 
 builder.Services.AddAuthentication(options =>
@@ -89,6 +92,21 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = jwtSettings["Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(key),
         RoleClaimType = ClaimTypes.Role // <-- Important: map role claim
+    };
+    
+    // Add better error handling
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"Token validated for user: {context.Principal?.Identity?.Name}");
+            return Task.CompletedTask;
+        }
     };
 });
 
@@ -146,6 +164,19 @@ using (var scope = app.Services.CreateScope())
 
 // Map controllers
 app.MapControllers();
+
+// Debug endpoint to test JWT token
+app.MapGet("/debug/token", (ClaimsPrincipal user) =>
+{
+    return Results.Ok(new
+    {
+        IsAuthenticated = user.Identity?.IsAuthenticated,
+        UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value,
+        Email = user.FindFirst(ClaimTypes.Email)?.Value,
+        Role = user.FindFirst(ClaimTypes.Role)?.Value,
+        Claims = user.Claims.Select(c => new { c.Type, c.Value }).ToList()
+    });
+}).RequireAuthorization();
 
 // Minimal API for login
 app.MapPost("/login", async (TaskTeamMgtSystemDbContext db, IConfiguration config, LoginRequest login) =>
