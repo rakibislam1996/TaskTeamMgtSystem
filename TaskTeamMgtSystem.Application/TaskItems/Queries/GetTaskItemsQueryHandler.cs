@@ -27,9 +27,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Queries
             if (!string.IsNullOrEmpty(request.Status))
                 query = query.Where(t => t.Status.ToString() == request.Status);
 
-            if (!string.IsNullOrEmpty(request.Priority))
-                query = query.Where(t => t.Priority == request.Priority);
-
             if (request.TeamId.HasValue)
                 query = query.Where(t => t.TeamId == request.TeamId.Value);
 
@@ -53,7 +50,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Queries
                     "title" => request.SortDesc ? query.OrderByDescending(t => t.Title) : query.OrderBy(t => t.Title),
                     "duedate" => request.SortDesc ? query.OrderByDescending(t => t.DueDate) : query.OrderBy(t => t.DueDate),
                     "status" => request.SortDesc ? query.OrderByDescending(t => t.Status) : query.OrderBy(t => t.Status),
-                    "priority" => request.SortDesc ? query.OrderByDescending(t => t.Priority) : query.OrderBy(t => t.Priority),
                     "assignedto" => request.SortDesc ? query.OrderByDescending(t => t.AssignedTo.FullName) : query.OrderBy(t => t.AssignedTo.FullName),
                     "team" => request.SortDesc ? query.OrderByDescending(t => t.Team.Name) : query.OrderBy(t => t.Team.Name),
                     _ => query.OrderBy(t => t.Id)

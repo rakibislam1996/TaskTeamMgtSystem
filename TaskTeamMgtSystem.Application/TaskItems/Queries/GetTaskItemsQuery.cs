@@ -9,7 +9,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Queries
     public class GetTaskItemsQuery : IRequest<PaginatedResult<TaskItem>>
     {
         public string? Status { get; set; }
-        public string? Priority { get; set; }
         public int? AssignedToUserId { get; set; }
         public int? CreatedByUserId { get; set; }
         public int? TeamId { get; set; }

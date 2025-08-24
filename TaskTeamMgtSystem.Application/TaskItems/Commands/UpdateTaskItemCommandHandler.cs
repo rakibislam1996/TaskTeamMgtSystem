@@ -43,7 +43,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Commands
             taskItem.Description = request.Description;
             taskItem.DueDate = request.DueDate;
             taskItem.Status = Enum.Parse<TaskTeamMgtSystem.Core.Domain.Enums.TaskStatus>(request.Status);
-            taskItem.Priority = request.Priority;
 
             await _context.SaveChangesAsync(cancellationToken);
             return taskItem.Id;

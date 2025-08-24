@@ -24,9 +24,9 @@ namespace TaskTeamMgtSystem.API.Controllers
             _authorizationService = authorizationService;
         }
 
-        // Manager: create/update tasks
+        // Admin/Manager: create tasks
         [HttpPost]
-        [Authorize(Policy = "Manager")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> CreateTask(CreateTaskItemCommand command)
         {
             var result = await _mediator.Send(command);
@@ -35,7 +35,7 @@ namespace TaskTeamMgtSystem.API.Controllers
         }
 
         [HttpPut]
-        [Authorize(Policy = "Manager")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> UpdateTask(UpdateTaskItemCommand command)
         {
             var result = await _mediator.Send(command);
@@ -43,20 +43,43 @@ namespace TaskTeamMgtSystem.API.Controllers
             return Ok(result);
         }
 
-        // Employee: view/update only their own assigned tasks
+        // All authenticated users can view tasks (with filtering based on role)
         [HttpGet]
-        [Authorize(Policy = "Employee")]
+        [Authorize]
         public async Task<IActionResult> GetTasks([FromQuery] GetTaskItemsQuery query)
         {
-            // Filter tasks to only show tasks assigned to the current user
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-            query.AssignedToUserId = userId;
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+            
+            // Admin and Manager can see all tasks
+            // Employee can only see tasks assigned to them
+            if (userRole == "Employee")
+            {
+                query.AssignedToUserId = userId;
+            }
+            
             return Ok(await _mediator.Send(query));
         }
 
         [HttpGet("{id}")]
-        [Authorize(Policy = "Employee")]
-        public async Task<IActionResult> GetTask(int id) => Ok(await _mediator.Send(new GetTaskItemByIdQuery { Id = id }));
+        [Authorize]
+        public async Task<IActionResult> GetTask(int id)
+        {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            var userRole = User.FindFirst(ClaimTypes.Role)?.Value ?? "";
+            
+            // Admin and Manager can access any task
+            // Employee can only access tasks assigned to them
+            if (userRole == "Employee")
+            {
+                if (!await _authorizationService.CanUserAccessTaskAsync(userId, id))
+                {
+                    return Forbid();
+                }
+            }
+            
+            return Ok(await _mediator.Send(new GetTaskItemByIdQuery { Id = id }));
+        }
 
         [HttpPut("employee/update")]
         [Authorize(Policy = "Employee")]
@@ -75,9 +98,9 @@ namespace TaskTeamMgtSystem.API.Controllers
             return Ok(result);
         }
 
-        // Manager: delete tasks
+        // Admin/Manager: delete tasks
         [HttpDelete("{id}")]
-        [Authorize(Policy = "Manager")]
+        [Authorize(Roles = "Admin,Manager")]
         public async Task<IActionResult> DeleteTask(int id)
         {
             var result = await _mediator.Send(new DeleteTaskItemCommand { Id = id });

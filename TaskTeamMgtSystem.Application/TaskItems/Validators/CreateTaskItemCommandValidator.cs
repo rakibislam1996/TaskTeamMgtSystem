@@ -27,10 +27,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Validators
                 .NotEmpty().WithMessage("Status is required.")
                 .Must(BeValidStatus).WithMessage("Status must be one of: ToDO, InProgress, Done");
 
-            RuleFor(x => x.Priority)
-                .NotEmpty().WithMessage("Priority is required.")
-                .Must(BeValidPriority).WithMessage("Priority must be one of: High, Medium, Low");
-
             RuleFor(x => x.DueDate)
                 .GreaterThan(DateTime.Now).When(x => x.DueDate.HasValue)
                 .WithMessage("Due date must be in the future.");
@@ -39,11 +35,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Validators
         private bool BeValidStatus(string status)
         {
             return new[] { "ToDO", "InProgress", "Done" }.Contains(status);
-        }
-
-        private bool BeValidPriority(string priority)
-        {
-            return new[] { "High", "Medium", "Low" }.Contains(priority);
         }
     }
 }

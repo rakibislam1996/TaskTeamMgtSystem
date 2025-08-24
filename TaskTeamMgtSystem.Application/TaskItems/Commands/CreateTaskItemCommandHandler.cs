@@ -36,7 +36,6 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Commands
                 TeamId = request.TeamId,
                 DueDate = request.DueDate,
                 Status = Enum.Parse<TaskTeamMgtSystem.Core.Domain.Enums.TaskStatus>(request.Status),
-                Priority = request.Priority,
                 AssignedTo = assignedUser,
                 CreatedBy = assignedUser,
                 Team = team
