@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Identity;
 using FluentValidation;
 using MediatR;
 using TaskTeamMgtSystem.Application.Common.Behaviors;
+using TaskTeamMgtSystem.API.Middleware;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +58,15 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
 });
 
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .CreateLogger();
+builder.Host.UseSerilog();
+
 var app = builder.Build();
+
+// Use global exception handling middleware
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Ensure database is created on startup and seed default users
 using (var scope = app.Services.CreateScope())
@@ -82,12 +92,18 @@ app.MapPost("/login", async (TaskTeamMgtSystemDbContext db, IConfiguration confi
 {
     var user = await db.Users.FirstOrDefaultAsync(u => u.Email == login.Email);
     if (user == null)
+    {
+        Log.Warning("Authentication failed for email: {Email}", login.Email);
         return Results.Unauthorized();
+    }
 
     var passwordHasher = new PasswordHasher<User>();
     var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash ?? string.Empty, login.Password);
     if (result == PasswordVerificationResult.Failed)
+    {
+        Log.Warning("Authentication failed for email: {Email}", login.Email);
         return Results.Unauthorized();
+    }
 
     var jwtSettings = config.GetSection("Jwt");
     var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
