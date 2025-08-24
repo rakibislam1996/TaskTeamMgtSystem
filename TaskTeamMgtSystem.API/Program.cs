@@ -1,5 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.Security.Claims;
 using TaskTeamMgtSystem.Infrastructure;
+using TaskTeamMgtSystem.Core.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,13 +17,43 @@ builder.Services.AddSwaggerGen(options => { });
 builder.Services.AddDbContext<TaskTeamMgtSystemDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// JWT Authentication configuration
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("Manager", policy => policy.RequireRole("Manager"));
+    options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
+});
+
 var app = builder.Build();
 
-// Ensure database is created on startup
+// Ensure database is created on startup and seed default users
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TaskTeamMgtSystemDbContext>();
     db.Database.EnsureCreated();
+    TaskTeamMgtSystem.Infrastructure.DbSeeder.SeedAsync(db).GetAwaiter().GetResult();
 }
 
 // Configure the HTTP request pipeline.
@@ -28,6 +64,40 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Login endpoint
+app.MapPost("/login", async (TaskTeamMgtSystemDbContext db, IConfiguration config, LoginRequest login) =>
+{
+    var user = await db.Users.FirstOrDefaultAsync(u => u.Email == login.Email);
+    if (user == null)
+        return Results.Unauthorized();
+
+    var passwordHasher = new PasswordHasher<User>();
+    var result = passwordHasher.VerifyHashedPassword(user, user.PasswordHash ?? string.Empty, login.Password);
+    if (result == PasswordVerificationResult.Failed)
+        return Results.Unauthorized();
+
+    var jwtSettings = config.GetSection("Jwt");
+    var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+        new Claim(ClaimTypes.Role, user.Role ?? string.Empty)
+    };
+    var token = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+        issuer: jwtSettings["Issuer"],
+        audience: jwtSettings["Audience"],
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(2),
+        signingCredentials: new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256)
+    );
+    var tokenString = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().WriteToken(token);
+    return Results.Ok(new { token = tokenString, role = user.Role });
+})
+.WithName("Login");
 
 var summaries = new[]
 {
@@ -54,3 +124,5 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+public record LoginRequest(string Email, string Password);

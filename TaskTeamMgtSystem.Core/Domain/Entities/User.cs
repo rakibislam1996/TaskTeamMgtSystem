@@ -5,9 +5,10 @@ namespace TaskTeamMgtSystem.Core.Domain.Entities
 {
     public class User : BaseEntity
     {
-        public string FullName { get; set; }
-        public string Email { get; set; }
-        public string Role { get; set; } // Admin, Manager, Employee
+        public string? FullName { get; set; }
+        public string? Email { get; set; }
+        public string? Role { get; set; } // Admin, Manager, Employee
+        public string? PasswordHash { get; set; } // Hashed password
 
         // Navigation properties
         public virtual ICollection<Tasks> AssignedTasks { get; set; }
