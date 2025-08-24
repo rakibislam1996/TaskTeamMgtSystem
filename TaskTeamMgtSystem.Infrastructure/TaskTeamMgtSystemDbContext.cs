@@ -11,7 +11,7 @@ namespace TaskTeamMgtSystem.Infrastructure
 
         public DbSet<User> Users { get; set; }
         public DbSet<Team> Teams { get; set; }
-        public DbSet<TaskItem> Tasks { get; set; }
+        public DbSet<TaskItem> TaskItem { get; set; }
         public DbSet<UserTeamMapping> UserTeamMappings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -32,7 +32,7 @@ namespace TaskTeamMgtSystem.Infrastructure
             // Tasks → Team with DeleteBehavior.Cascade
             modelBuilder.Entity<TaskItem>()
                 .HasOne(t => t.Team)
-                .WithMany(team => team.Tasks)
+                .WithMany(team => team.TaskItems)
                 .HasForeignKey(t => t.TeamId)
                 .OnDelete(DeleteBehavior.Cascade);
 
