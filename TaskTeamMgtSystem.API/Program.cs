@@ -14,9 +14,14 @@ using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// -------------------- SERVICES --------------------
+
+// Add controllers
+builder.Services.AddControllers();
+
+// Swagger / API Explorer
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => { });
+builder.Services.AddSwaggerGen();
 
 // Register DbContext with SQL Server provider
 builder.Services.AddDbContext<TaskTeamMgtSystemDbContext>(options =>
@@ -25,13 +30,14 @@ builder.Services.AddDbContext<TaskTeamMgtSystemDbContext>(options =>
 // Register FluentValidation
 builder.Services.AddValidatorsFromAssemblyContaining<TaskTeamMgtSystem.Application.Users.Validators.CreateUserCommandValidator>();
 
-// Register MediatR and ValidationBehavior (v11 syntax)
+// Register MediatR and pipeline behaviors
 builder.Services.AddMediatR(typeof(TaskTeamMgtSystem.Application.Users.Commands.CreateUserCommand).Assembly);
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 // JWT Authentication configuration
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var key = Encoding.UTF8.GetBytes(jwtSettings["Key"] ?? string.Empty);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -51,6 +57,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+// Authorization policies
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
@@ -58,36 +65,46 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
 });
 
+// Serilog logging
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
+
 builder.Host.UseSerilog();
 
 var app = builder.Build();
 
-// Use global exception handling middleware
+// -------------------- MIDDLEWARE --------------------
+
+// Global exception handling
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-// Ensure database is created on startup and seed default users
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<TaskTeamMgtSystemDbContext>();
-    db.Database.EnsureCreated();
-    TaskTeamMgtSystem.Infrastructure.DbSeeder.SeedAsync(db).GetAwaiter().GetResult();
-}
-
-// Configure the HTTP request pipeline.
+// Swagger for development
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options => { });
+    app.UseSwaggerUI();
 }
 
+// HTTPS, Authentication, Authorization
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Login endpoint
+// -------------------- DATABASE SEED --------------------
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TaskTeamMgtSystemDbContext>();
+    db.Database.EnsureCreated();
+    DbSeeder.SeedAsync(db).GetAwaiter().GetResult();
+}
+
+// -------------------- ROUTES --------------------
+
+// Map controllers
+app.MapControllers();
+
+// Optional: Minimal API for login
 app.MapPost("/login", async (TaskTeamMgtSystemDbContext db, IConfiguration config, LoginRequest login) =>
 {
     var user = await db.Users.FirstOrDefaultAsync(u => u.Email == login.Email);
@@ -125,30 +142,7 @@ app.MapPost("/login", async (TaskTeamMgtSystemDbContext db, IConfiguration confi
 })
 .WithName("Login");
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
 app.Run();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
-
+// -------------------- RECORDS --------------------
 public record LoginRequest(string Email, string Password);
