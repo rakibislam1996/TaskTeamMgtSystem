@@ -10,14 +10,14 @@ namespace TaskTeamMgtSystem.Core.Domain.Entities
         public string Role { get; set; } // Admin, Manager, Employee
 
         // Navigation properties
-        public virtual ICollection<Task> AssignedTasks { get; set; }
-        public virtual ICollection<Task> CreatedTasks { get; set; }
+        public virtual ICollection<Tasks> AssignedTasks { get; set; }
+        public virtual ICollection<Tasks> CreatedTasks { get; set; }
         public virtual ICollection<UserTeamMapping> TeamMappings { get; set; }
 
         public User()
         {
-            AssignedTasks = new HashSet<Task>();
-            CreatedTasks = new HashSet<Task>();
+            AssignedTasks = new HashSet<Tasks>();
+            CreatedTasks = new HashSet<Tasks>();
             TeamMappings = new HashSet<UserTeamMapping>();
         }
     }
