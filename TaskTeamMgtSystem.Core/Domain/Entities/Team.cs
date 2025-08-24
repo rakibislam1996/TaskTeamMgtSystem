@@ -9,12 +9,12 @@ namespace TaskTeamMgtSystem.Core.Domain.Entities
         public string Description { get; set; }
 
         // Navigation properties
-        public virtual ICollection<Tasks> Tasks { get; set; }
+        public virtual ICollection<TaskItem> Tasks { get; set; }
         public virtual ICollection<UserTeamMapping> TeamMembers { get; set; }
 
         public Team()
         {
-            Tasks = new HashSet<Tasks>();
+            Tasks = new HashSet<TaskItem>();
             TeamMembers = new HashSet<UserTeamMapping>();
         }
     }

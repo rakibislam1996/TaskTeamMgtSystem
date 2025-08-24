@@ -11,14 +11,14 @@ namespace TaskTeamMgtSystem.Core.Domain.Entities
         public string? PasswordHash { get; set; } // Hashed password
 
         // Navigation properties
-        public virtual ICollection<Tasks> AssignedTasks { get; set; }
-        public virtual ICollection<Tasks> CreatedTasks { get; set; }
+        public virtual ICollection<TaskItem> AssignedTasks { get; set; }
+        public virtual ICollection<TaskItem> CreatedTasks { get; set; }
         public virtual ICollection<UserTeamMapping> TeamMappings { get; set; }
 
         public User()
         {
-            AssignedTasks = new HashSet<Tasks>();
-            CreatedTasks = new HashSet<Tasks>();
+            AssignedTasks = new HashSet<TaskItem>();
+            CreatedTasks = new HashSet<TaskItem>();
             TeamMappings = new HashSet<UserTeamMapping>();
         }
     }

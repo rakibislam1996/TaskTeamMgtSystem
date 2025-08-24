@@ -1,6 +1,6 @@
 namespace TaskTeamMgtSystem.Core.Domain.Enums
 {
-    public enum TaskStatus
+    public enum TasksStatus
     {
         ToDO,
         InProgress,
