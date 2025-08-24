@@ -16,7 +16,7 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Queries
         public DateTime? DueDateTo { get; set; }
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
-        public string SortBy { get; set; }
+        public string? SortBy { get; set; }
         public bool SortDesc { get; set; }
     }
 }
