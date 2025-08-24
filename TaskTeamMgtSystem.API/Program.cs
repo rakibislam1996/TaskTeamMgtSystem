@@ -6,6 +6,9 @@ using System.Security.Claims;
 using TaskTeamMgtSystem.Infrastructure;
 using TaskTeamMgtSystem.Core.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using FluentValidation;
+using MediatR;
+using TaskTeamMgtSystem.Application.Common.Behaviors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +19,13 @@ builder.Services.AddSwaggerGen(options => { });
 // Register DbContext with SQL Server provider
 builder.Services.AddDbContext<TaskTeamMgtSystemDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<TaskTeamMgtSystem.Application.Users.Validators.CreateUserCommandValidator>();
+
+// Register MediatR and ValidationBehavior (v11 syntax)
+builder.Services.AddMediatR(typeof(TaskTeamMgtSystem.Application.Users.Commands.CreateUserCommand).Assembly);
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
 // JWT Authentication configuration
 var jwtSettings = builder.Configuration.GetSection("Jwt");
