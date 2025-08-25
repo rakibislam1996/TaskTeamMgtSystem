@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TaskTeamMgtSystem.Core.Domain.Entities;
 using TaskTeamMgtSystem.Application.Common.Models;
 using TaskTeamMgtSystem.Infrastructure;
+using TaskTeamMgtSystem.Core.Domain.Enums;
 
 namespace TaskTeamMgtSystem.Application.TaskItems.Queries
 {
@@ -21,11 +22,22 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Queries
                 .Include(t => t.AssignedTo)
                 .Include(t => t.CreatedBy)
                 .Include(t => t.Team)
+                .AsNoTracking()
                 .AsQueryable();
 
-            // Apply filters
-            if (!string.IsNullOrEmpty(request.Status))
-                query = query.Where(t => t.Status.ToString() == request.Status);
+            // Status (enum) — parse once, then filter
+            if (!string.IsNullOrWhiteSpace(request.Status))
+            {
+                if (Enum.TryParse<Core.Domain.Enums.TaskStatus>(request.Status, ignoreCase: true, out var statusEnum))
+                {
+                    query = query.Where(t => t.Status == statusEnum);
+                }
+                else
+                {
+                    throw new ArgumentException(
+                        $"Invalid status '{request.Status}'. Allowed: {string.Join(", ", Enum.GetNames(typeof(System.Threading.Tasks.TaskStatus)))}");
+                }
+            }
 
             if (request.TeamId.HasValue)
                 query = query.Where(t => t.TeamId == request.TeamId.Value);
@@ -42,7 +54,7 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Queries
             if (request.DueDateTo.HasValue)
                 query = query.Where(t => t.DueDate <= request.DueDateTo.Value);
 
-            // Apply sorting
+            // Sorting
             if (!string.IsNullOrEmpty(request.SortBy))
             {
                 query = request.SortBy.ToLower() switch
@@ -60,15 +72,19 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Queries
                 query = query.OrderBy(t => t.Id);
             }
 
-            // Apply pagination
+            // Pagination
             var totalCount = await query.CountAsync(cancellationToken);
+
+            if (request.PageNumber <= 0)
+                request.PageNumber = 1;
+
             var items = await query
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
-            // Return with pagination info
             return new PaginatedResult<TaskItem>(items, totalCount, request.PageNumber, request.PageSize);
         }
     }
+
 }

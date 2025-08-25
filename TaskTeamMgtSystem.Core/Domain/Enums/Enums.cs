@@ -2,7 +2,7 @@ namespace TaskTeamMgtSystem.Core.Domain.Enums
 {
     public enum TaskStatus
     {
-        ToDO,
+        ToDo,
         InProgress,
         Done
     }

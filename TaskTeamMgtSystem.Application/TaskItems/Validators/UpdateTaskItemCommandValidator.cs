@@ -25,7 +25,7 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Validators
 
             RuleFor(x => x.Status)
                 .NotEmpty().WithMessage("Status is required.")
-                .Must(BeValidStatus).WithMessage("Status must be one of: ToDO, InProgress, Done");
+                .Must(BeValidStatus).WithMessage("Status must be one of: ToDo, InProgress, Done");
 
             RuleFor(x => x.DueDate)
                 .GreaterThan(DateTime.Now).When(x => x.DueDate.HasValue)
@@ -34,7 +34,7 @@ namespace TaskTeamMgtSystem.Application.TaskItems.Validators
 
         private bool BeValidStatus(string status)
         {
-            return new[] { "ToDO", "InProgress", "Done" }.Contains(status);
+            return new[] { "ToDo", "InProgress", "Done" }.Contains(status);
         }
     }
 }
